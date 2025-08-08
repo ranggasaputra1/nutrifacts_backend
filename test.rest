@@ -1,0 +1,7 @@
+
+
+
+
+POST http://localhost:3000/user/
+Content-Type: application/application/json
+berier:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImxhcHRvcGFjZXIiLCJpYXQiOjE3MDE4NjU2NzAsImV4cCI6MTcwMTg2OTI3MH0.Q0kdUu4TkMmtkc8qmWqh6Ax88qAw02Jwf89oA47HfC8

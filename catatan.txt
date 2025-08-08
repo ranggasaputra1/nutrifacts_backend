@@ -1,0 +1,4 @@
+1. Pastikan sudah berada di folder yang benar
+2. di terminal install node_modules dengan jalankan perintah "npm install"
+3. untuk menjalankan project di terminal jalankan perintah "npm run start"
+4. Harap login terlebih dahulu untuk mendapatkan token Autentikasi
