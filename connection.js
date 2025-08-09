@@ -1,10 +1,10 @@
 // Koneksi ke Database MySql
 const mysql = require("mysql");
 const connection = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "nutrifacts",
+  host: "sql12.freesqldatabase.com",
+  user: "sql12793979",
+  password: "ka23dtcQZt",
+  database: "sql12793979",
 });
 connection.connect((err) => {
   if (err) {
