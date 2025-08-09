@@ -203,20 +203,16 @@ router.post("/saved", authenticateToken, (req, res) => {
     "INSERT INTO usersaved (name, company, photoUrl, barcode, id_user) VALUES (?, ?, ?, ?, ?)";
   db.query(sql, [name, company, photoUrl, barcode, id_user], (err, result) => {
     if (err) {
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Failed to save Usersaved data to database",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Failed to save Usersaved data to database",
+      });
       throw err;
     }
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "The data Usersaved has been successfully saved",
-      });
+    res.status(201).json({
+      success: true,
+      message: "The data Usersaved has been successfully saved into database",
+    });
   });
 });
 
