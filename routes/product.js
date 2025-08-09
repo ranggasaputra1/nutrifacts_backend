@@ -74,6 +74,8 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
   });
 });
 
+//
+
 // Route apabila tidak memasukan Name
 router.get("/name", authenticateToken, (req, res) => {
   return res.status(400).json({
