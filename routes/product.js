@@ -36,7 +36,7 @@ router.get("/barcode", authenticateToken, (req, res) => {
 
 // Rute untuk mendapatkan data Nutrisi Produk berdasarkan Barcode
 router.get("/barcode/:barcode", authenticateToken, (req, res) => {
-  const barcode = req.params.barcode;
+  const barcode = req.params.barcode.trim();
 
   // Validasi: Pastikan barcode hanya berisi angka dan memiliki panjang yang sesuai
   if (!/^\d+$/.test(barcode)) {
