@@ -248,8 +248,6 @@ router.delete("/saved/:id", authenticateToken, (req, res) => {
   });
 });
 
-// --- Rute-rute yang lebih umum (`/` dan `/:id`) diletakkan di bawah ---
-
 // Route get all data user
 router.get("/", authenticateToken, (req, res) => {
   const query = "SELECT * FROM user";
