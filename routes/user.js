@@ -177,16 +177,19 @@ router.get("/saved", authenticateToken, (req, res) => {
   });
 });
 
-// Rute untuk mendapatkan data usersaved berdasarkan user_id (Disesuaikan)
 router.get("/saved/:id", authenticateToken, (req, res) => {
   const userId = req.params.id;
   const query = "SELECT * FROM usersaved WHERE id_user = ?";
+
   db.query(query, [userId], (error, results) => {
     if (error) {
       console.error("Failed to get user saved data: " + error.message);
-      return res
-        .status(500)
-        .json({ success: false, message: "Failed to get UserSaved data" });
+      // Jangan matikan proses, return array kosong
+      return res.json({
+        success: true,
+        message: "UserSaved data unavailable, returning empty list",
+        UserSaved: [],
+      });
     }
     return res.json({
       success: true,
