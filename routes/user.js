@@ -1,17 +1,13 @@
 var express = require("express");
 var router = express.Router();
 const db = require("../connection");
-const bodyParser = require("body-parser");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const { generateToken } = require("../middleware/verify-token");
 const { authenticateToken } = require("../middleware/verify-token");
 
-// Route Login User
+// --- Route Login dan Signup (Biarkan di atas) ---
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  // Memeriksa apakah email dan password diinputkan
   if (!email || !password) {
     return res.status(400).json({
       success: false,
@@ -37,14 +33,10 @@ router.post("/login", (req, res) => {
     }
 
     const user = results[0];
-
-    // Memeriksa apakah password cocok dengan password teks biasa di database
-    const isPasswordMatch = password === user.password; // Ini yang diubah
+    const isPasswordMatch = password === user.password;
 
     if (isPasswordMatch) {
-      // Jika otentikasi berhasil, generate token
       const token = generateToken(user);
-
       return res.status(200).json({
         success: true,
         message: "Login Successful",
@@ -60,12 +52,10 @@ router.post("/login", (req, res) => {
   });
 });
 
-// Route untuk signup user
 router.post("/signup", (req, res) => {
   try {
     const { email, username, password } = req.body;
 
-    // Periksa apakah email, username, dan password telah diinputkan
     if (!email || !username || !password) {
       return res.status(400).json({
         success: false,
@@ -73,7 +63,6 @@ router.post("/signup", (req, res) => {
       });
     }
 
-    // Periksa apakah email mengandung karakter '@'
     if (!email.includes("@")) {
       return res.status(400).json({
         success: false,
@@ -81,7 +70,6 @@ router.post("/signup", (req, res) => {
       });
     }
 
-    // Periksa apakah email sudah ada di database
     const checkEmailQuery = "SELECT * FROM user WHERE email = ?";
     db.query(checkEmailQuery, [email], (checkEmailErr, checkEmailResult) => {
       if (checkEmailErr) {
@@ -91,7 +79,6 @@ router.post("/signup", (req, res) => {
           .json({ success: false, message: "Internal Server Error" });
       }
 
-      // Jika email sudah ada, beri respons
       if (checkEmailResult.length > 0) {
         return res.status(400).json({
           success: false,
@@ -99,7 +86,6 @@ router.post("/signup", (req, res) => {
         });
       }
 
-      // Periksa panjang password
       if (password.length < 8) {
         return res.status(400).json({
           success: false,
@@ -107,8 +93,6 @@ router.post("/signup", (req, res) => {
         });
       }
 
-      // Query untuk insert user baru ke database tanpa hashing
-      // Menghapus 'createdat' karena tidak ada di tabel user
       const insertUserQuery =
         "INSERT INTO user (email, username, password) VALUES (?, ?, ?)";
       db.query(
@@ -141,25 +125,260 @@ router.post("/signup", (req, res) => {
   }
 });
 
+// --- Rute-rute spesifik ditempatkan di atas rute umum `/:id` ---
+
+// Route penanganan jika tidak memasukkan ID untuk history
+router.get("/history", authenticateToken, (req, res) => {
+  return res.status(400).json({
+    success: false,
+    message: "User ID must be provided to get history. Please enter a valid ID",
+  });
+});
+
+// Rute untuk mendapatkan data userhistory berdasarkan ID (Disesuaikan)
+router.get("/history/:id", authenticateToken, (req, res) => {
+  const userId = req.params.id;
+  const query = "SELECT * FROM userhistory WHERE id_user = ?";
+  db.query(query, [userId], (error, results) => {
+    if (error) {
+      console.error("Failed to get user history data: " + error.message);
+      return res.status(500).json({ error: "Failed to get user history data" });
+    }
+    if (results.length === 0) {
+      return res.status(404).json({ error: "User History not found" });
+    } else {
+      return res.json(results);
+    }
+  });
+});
+
+// Route untuk Post data ke User History (Disesuaikan)
+router.post("/history", authenticateToken, (req, res) => {
+  const { name, company, photoUrl, barcode, id_user } = req.body;
+  const sql =
+    "INSERT INTO userhistory (name, company, photoUrl, barcode, id_user) VALUES (?, ?, ?, ?, ?)";
+  db.query(sql, [name, company, photoUrl, barcode, id_user], (err, result) => {
+    if (err) {
+      res.status(500).json({ error: "Failed to save data to database" });
+      throw err;
+    }
+    res
+      .status(201)
+      .json({ message: "The data History has been successfully saved" });
+  });
+});
+
+// Route penanganan jika tidak memasukkan ID untuk saved
+router.get("/saved", authenticateToken, (req, res) => {
+  return res.status(400).json({
+    success: false,
+    message:
+      "User ID must be provided to get saved products. Please enter a valid ID",
+  });
+});
+
+// Rute untuk mendapatkan data usersaved berdasarkan user_id (Disesuaikan)
+router.get("/saved/:id", authenticateToken, (req, res) => {
+  const userId = req.params.id;
+  const query = "SELECT * FROM usersaved WHERE id_user = ?";
+  db.query(query, [userId], (error, results) => {
+    if (error) {
+      console.error("Failed to get user saved data: " + error.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to get UserSaved data" });
+    }
+    return res.json({
+      success: true,
+      message: "Successfully retrieved Usersaved data by UserId",
+      UserSaved: results,
+    });
+  });
+});
+
+// Route untuk Post UserSaved (Disesuaikan)
+router.post("/saved", authenticateToken, (req, res) => {
+  const { name, company, photoUrl, barcode, id_user } = req.body;
+  const sql =
+    "INSERT INTO usersaved (name, company, photoUrl, barcode, id_user) VALUES (?, ?, ?, ?, ?)";
+  db.query(sql, [name, company, photoUrl, barcode, id_user], (err, result) => {
+    if (err) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Failed to save Usersaved data to database",
+        });
+      throw err;
+    }
+    res
+      .status(201)
+      .json({
+        success: true,
+        message: "The data Usersaved has been successfully saved",
+      });
+  });
+});
+
+// Rute untuk menghapus data usersaved berdasarkan Id
+router.delete("/saved/:id", authenticateToken, (req, res) => {
+  const usersavedId = req.params.id;
+
+  const checkUserQuery = "SELECT * FROM usersaved WHERE id = ?";
+  db.query(checkUserQuery, [usersavedId], (checkError, checkResults) => {
+    if (checkError) {
+      console.error("Failed to get Usersaved data" + checkError.message);
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to get Usersaved data" });
+    }
+    if (checkResults.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Usersaved data not found" });
+    }
+    const deleteUserQuery = "DELETE FROM usersaved WHERE id = ?";
+    db.query(deleteUserQuery, [usersavedId], (deleteError) => {
+      if (deleteError) {
+        console.error("Failed to delete Usersaved data" + deleteError.message);
+        return res
+          .status(500)
+          .json({ success: false, message: "Failed to delete Usersaved data" });
+      }
+      return res
+        .status(200)
+        .json({ success: true, message: "Usersaved data has been deleted" });
+    });
+  });
+});
+
+// --- Rute-rute yang lebih umum (`/` dan `/:id`) diletakkan di bawah ---
+
 // Route get all data user
 router.get("/", authenticateToken, (req, res) => {
   const query = "SELECT * FROM user";
-  db.query(query, (error, results, fields) => {
+  db.query(query, (error, results) => {
     if (error) {
       console.error("Error in MySQL query: " + error.message);
-      res.status(500).send("Error in MySQL query");
+      res.status(500).json({ success: false, message: "Error in MySQL query" });
       return;
     }
-    res.json({ message: "Success", user: req.user, data: results });
+    const usersWithoutPassword = results.map((user) => {
+      const { password, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
+    res.json({
+      message: "Success",
+      user: req.user,
+      data: usersWithoutPassword,
+    });
+  });
+});
+
+// Rute untuk Update data pengguna berdasarkan ID
+router.put("/:id", authenticateToken, (req, res) => {
+  const userId = req.params.id;
+  const { username, email, password, photoUrl } = req.body;
+
+  let updateValues = [];
+  let updateFields = [];
+
+  if (photoUrl) {
+    updateFields.push("photoUrl = ?");
+    updateValues.push(photoUrl);
+  }
+
+  if (username) {
+    updateFields.push("username = ?");
+    updateValues.push(username);
+  }
+
+  if (email) {
+    updateFields.push("email = ?");
+    updateValues.push(email);
+  }
+
+  if (password) {
+    if (password.length < 8) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters long" });
+    }
+    updateFields.push("password = ?");
+    updateValues.push(password);
+  }
+
+  if (updateFields.length === 0) {
+    return res.status(400).json({ message: "No fields to update" });
+  }
+
+  let updateUserQuery =
+    "UPDATE user SET " + updateFields.join(", ") + " WHERE user_id = ?";
+  updateValues.push(userId);
+
+  db.query(updateUserQuery, updateValues, (updateError, updateResults) => {
+    if (updateError) {
+      console.error("Failed to update user data" + updateError.message);
+      return res.status(500).json({ error: "Failed to update user data" });
+    }
+
+    if (updateResults.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ error: "User not found or no changes made" });
+    }
+
+    const getUpdatedUserQuery = "SELECT * FROM user WHERE user_id = ?";
+    db.query(getUpdatedUserQuery, [userId], (getError, getResults) => {
+      if (getError) {
+        console.error("Failed to get updated user data" + getError.message);
+        return res
+          .status(500)
+          .json({ error: "Failed to get updated user data" });
+      }
+
+      const updatedUser = getResults[0];
+      delete updatedUser.password;
+      return res.status(200).json({
+        message: "Update user data successful",
+        user: updatedUser,
+      });
+    });
+  });
+});
+
+// Rute untuk menghapus data pengguna berdasarkan ID
+router.delete("/:id", authenticateToken, (req, res) => {
+  const userId = req.params.id;
+
+  const checkUserQuery = "SELECT * FROM user WHERE user_id = ?";
+  db.query(checkUserQuery, [userId], (checkError, checkResults) => {
+    if (checkError) {
+      console.error("Failed to get user data" + checkError.message);
+      return res.status(500).json({ error: "Failed to get user data" });
+    }
+
+    if (checkResults.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const deleteUserQuery = "DELETE FROM user WHERE user_id = ?";
+    db.query(deleteUserQuery, [userId], (deleteError) => {
+      if (deleteError) {
+        console.error("Failed to delete user data" + deleteError.message);
+        return res.status(500).json({ error: "Failed to delete user data" });
+      }
+
+      return res.status(200).json({ message: "User data has been deleted" });
+    });
   });
 });
 
 // Rute untuk mendapatkan data user berdasarkan ID
 router.get("/:id", authenticateToken, (req, res) => {
   const userId = req.params.id;
-  // Query ke database untuk mendapatkan data user berdasarkan ID
   const query = "SELECT * FROM user WHERE user_id = ?";
-  db.query(query, [userId], (error, results, fields) => {
+  db.query(query, [userId], (error, results) => {
     if (error) {
       console.error("Failed to get user data: " + error.message);
       return res.status(500).json({ error: "Failed to get user data" });
@@ -175,277 +394,6 @@ router.get("/:id", authenticateToken, (req, res) => {
       return res.json(user);
     }
   });
-});
-
-// Rute untuk Update data pengguna dan Photo Url berdasarkan ID
-router.put("/:id", authenticateToken, async (req, res) => {
-  const userId = req.params.id;
-  const { username, email, password, photoUrl } = req.body;
-
-  try {
-    // Validasi panjang password
-    if (password && password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters long" });
-    }
-
-    // Hash kata sandi menggunakan bcrypt jika ada perubahan kata sandi
-    let hashedPassword = password;
-    if (password) {
-      hashedPassword = await bcrypt.hash(password, 10);
-    }
-
-    // Periksa apakah pengguna sudah ada sebelum memperbarui data
-    const checkUserQuery = "SELECT * FROM user WHERE user_id = ?";
-    db.query(
-      checkUserQuery,
-      [userId],
-      async (checkError, checkResults, checkFields) => {
-        if (checkError) {
-          console.error("Failed to get user data" + checkError.message);
-          return res.status(500).json({ error: "Failed to get user data" });
-        } else if (checkResults.length === 0) {
-          return res.status(404).json({ error: "User not found" });
-        }
-
-        // Update data User
-        let updateUserQuery = "UPDATE user SET";
-        let updateValues = [];
-
-        if (photoUrl) {
-          updateUserQuery += " photoUrl = ?,";
-          updateValues.push(photoUrl);
-        }
-
-        if (username) {
-          updateUserQuery += " username = ?,";
-          updateValues.push(username);
-        }
-
-        if (email) {
-          updateUserQuery += " email = ?,";
-          updateValues.push(email);
-        }
-
-        if (password) {
-          updateUserQuery += " password = ?,";
-          updateValues.push(hashedPassword);
-        }
-
-        // Hapus koma terakhir
-        updateUserQuery = updateUserQuery.slice(0, -1);
-
-        updateUserQuery += " WHERE user_id = ?";
-        updateValues.push(userId);
-
-        db.query(
-          updateUserQuery,
-          updateValues,
-          (updateError, updateResults, updateFields) => {
-            if (updateError) {
-              console.error("Failed to update user data" + updateError.message);
-              return res
-                .status(500)
-                .json({ error: "Failed to update user data" });
-            }
-
-            // Query untuk mendapatkan data user yang baru saja diperbarui
-            const getUpdatedUserQuery = "SELECT * FROM user WHERE user_id = ?";
-            db.query(
-              getUpdatedUserQuery,
-              [userId],
-              (getError, getResults, getFields) => {
-                if (getError) {
-                  console.error(
-                    "Failed to get updated user data" + getError.message
-                  );
-                  return res
-                    .status(500)
-                    .json({ error: "Failed to get updated user data" });
-                }
-
-                const updatedUser = getResults[0];
-                // Kirim respons dengan data user yang baru saja diperbarui
-                return res.status(200).json({
-                  message: "Update user data successful",
-                  user: updatedUser,
-                });
-              }
-            );
-          }
-        );
-      }
-    );
-  } catch (error) {
-    console.error("Error in updating user data: " + error.message);
-    return res.status(500).json({ error: "Error in updating user data" });
-  }
-});
-
-// Rute untuk menghapus data pengguna berdasarkan ID
-router.delete("/:id", authenticateToken, (req, res) => {
-  const userId = req.params.id;
-
-  const checkUserQuery = "SELECT * FROM user WHERE user_id = ?";
-  db.query(
-    checkUserQuery,
-    [userId],
-    (checkError, checkResults, checkFields) => {
-      if (checkError) {
-        console.error("Failed to get user data" + checkError.message);
-        return res.status(500).json({ error: "Failed to get user data" });
-      }
-
-      if (checkResults.length === 0) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const deleteUserQuery = "DELETE FROM user WHERE user_id = ?";
-      db.query(
-        deleteUserQuery,
-        [userId],
-        (deleteError, deleteResults, deleteFields) => {
-          if (deleteError) {
-            console.error("Failed to delete user data" + deleteError.message);
-            return res
-              .status(500)
-              .json({ error: "Failed to delete user data" });
-          }
-
-          return res
-            .status(200)
-            .json({ message: "User data has been deleted" });
-        }
-      );
-    }
-  );
-});
-
-// Rute untuk mendapatkan data userhistory berdasarkan ID
-router.get("/history/:id", authenticateToken, (req, res) => {
-  const userId = req.params.id;
-  // Query ke database untuk mendapatkan data userhistory berdasarkan ID
-  const query = "SELECT * FROM userhistory WHERE user_id = ?";
-  db.query(query, [userId], (error, results, fields) => {
-    if (error) {
-      console.error("Failed to get user history data: " + error.message);
-      return res.status(500).json({ error: "Failed to get user history data" });
-    }
-
-    if (results.length === 0) {
-      return res.status(404).json({ error: "User History not found" });
-    } else {
-      return res.json(results);
-    }
-  });
-});
-
-// Route untuk Post data ke User History
-router.post("/history", authenticateToken, (req, res) => {
-  const { name, company, photoUrl, barcode, user_id } = req.body;
-
-  // Query untuk menyimpan data ke database
-  const sql =
-    "INSERT INTO userhistory (name, company, photoUrl, barcode, user_id) VALUES (?, ?, ?, ?, ?)";
-  db.query(sql, [name, company, photoUrl, barcode, user_id], (err, result) => {
-    if (err) {
-      res.status(500).json({ error: "Failed to save data to database" });
-      throw err;
-    }
-    res
-      .status(201)
-      .json({ message: "The data History has been successfully saved" });
-  });
-});
-
-// Rute untuk mendapatkan data usersaved berdasarkan user_id
-router.get("/saved/:id", authenticateToken, (req, res) => {
-  const userId = req.params.id;
-  // Query ke database untuk mendapatkan data usersaved berdasarkan ID
-  const query = "SELECT * FROM usersaved WHERE user_id = ?";
-  db.query(query, [userId], (error, results, fields) => {
-    if (error) {
-      console.error("Failed to get user saved data: " + error.message);
-      return res
-        .status(500)
-        .json({ success: false, message: "Failed to get UserSaved data" });
-    }
-    return res.json({
-      success: true,
-      message: "Successfully retrieved Usersaved data by UserId",
-      UserSaved: results,
-    });
-  });
-});
-
-// Route untuk Post UserSaved
-router.post("/saved", authenticateToken, (req, res) => {
-  const { name, company, photoUrl, barcode, user_id } = req.body;
-
-  // Query untuk menyimpan data ke database
-  const sql =
-    "INSERT INTO usersaved (name, company, photoUrl, barcode, user_id) VALUES (?, ?, ?, ?, ?)";
-  db.query(sql, [name, company, photoUrl, barcode, user_id], (err, result) => {
-    if (err) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to save Usersaved data to database",
-      });
-      throw err;
-    }
-    res.status(201).json({
-      success: true,
-      message: "The data Usersaved has been successfully saved",
-    });
-  });
-});
-
-// Rute untuk menghapus data usersaved berdasarkan Id
-router.delete("/saved/:id", authenticateToken, (req, res) => {
-  const usersavedId = req.params.id;
-
-  const checkUserQuery = "SELECT * FROM usersaved WHERE id = ?";
-  db.query(
-    checkUserQuery,
-    [usersavedId],
-    (checkError, checkResults, checkFields) => {
-      if (checkError) {
-        console.error("Failed to get Usersaved data" + checkError.message);
-        return res
-          .status(500)
-          .json({ success: false, message: "Failed to get Usersaved data" });
-      }
-
-      if (checkResults.length === 0) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Usersaved data not found" });
-      }
-
-      const deleteUserQuery = "DELETE FROM usersaved WHERE id = ?";
-      db.query(
-        deleteUserQuery,
-        [usersavedId],
-        (deleteError, deleteResults, deleteFields) => {
-          if (deleteError) {
-            console.error(
-              "Failed to delete Usersaved data" + deleteError.message
-            );
-            return res.status(500).json({
-              success: false,
-              message: "Failed to delete Usersaved data",
-            });
-          }
-
-          return res.status(200).json({
-            success: true,
-            message: "Usersaved data has been deleted",
-          });
-        }
-      );
-    }
-  );
 });
 
 module.exports = router;
