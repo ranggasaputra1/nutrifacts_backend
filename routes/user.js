@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const { generateToken } = require("../middleware/verify-token");
 const { authenticateToken } = require("../middleware/verify-token");
 
-// // Route Login User
+// Route Login User
 router.post("/login", (req, res) => {
   const { email, password } = req.body;
 
@@ -20,7 +20,7 @@ router.post("/login", (req, res) => {
   }
 
   const sql = "SELECT * FROM user WHERE email = ?";
-  db.query(sql, [email], async (err, results) => {
+  db.query(sql, [email], (err, results) => {
     if (err) {
       console.error("Error during login:", err);
       return res
@@ -38,12 +38,8 @@ router.post("/login", (req, res) => {
 
     const user = results[0];
 
-    // Memeriksa apakah password cocok
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-
-    console.log("Input Password:", password);
-    console.log("Stored Hashed Password:", user.password);
-    console.log("Password Match:", isPasswordMatch);
+    // Memeriksa apakah password cocok dengan password teks biasa di database
+    const isPasswordMatch = password === user.password; // Ini yang diubah
 
     if (isPasswordMatch) {
       // Jika otentikasi berhasil, generate token
@@ -65,7 +61,7 @@ router.post("/login", (req, res) => {
 });
 
 // Route untuk signup user
-router.post("/signup", async (req, res) => {
+router.post("/signup", (req, res) => {
   try {
     const { email, username, password } = req.body;
 
@@ -87,66 +83,58 @@ router.post("/signup", async (req, res) => {
 
     // Periksa apakah email sudah ada di database
     const checkEmailQuery = "SELECT * FROM user WHERE email = ?";
-    db.query(
-      checkEmailQuery,
-      [email],
-      async (checkEmailErr, checkEmailResult) => {
-        if (checkEmailErr) {
-          console.error("Error checking email:", checkEmailErr);
-          return res
-            .status(500)
-            .json({ success: false, message: "Internal Server Error" });
-        }
-
-        // Jika email sudah ada, beri respons
-        if (checkEmailResult.length > 0) {
-          return res.status(400).json({
-            success: false,
-            message: "Email already exists. Please use a different email.",
-          });
-        }
-
-        // Periksa panjang password
-        if (password.length < 8) {
-          return res.status(400).json({
-            success: false,
-            message: "Password should be at least 8 characters long.",
-          });
-        }
-
-        // Hash password sebelum menyimpan ke database
-        const hashedPassword = bcrypt.hashSync(password, 10);
-
-        const createdat = new Date();
-
-        // Query untuk insert user baru ke database dengan createdat
-        const insertUserQuery =
-          "INSERT INTO user (email, username, password, createdat) VALUES (?, ?, ?, ?)";
-        db.query(
-          insertUserQuery,
-          [email, username, hashedPassword, createdat],
-          (insertErr, result) => {
-            if (insertErr) {
-              console.error("Error during user registration:", insertErr);
-              return res
-                .status(500)
-                .json({ success: false, message: "Internal Server Error" });
-            }
-
-            if (result.affectedRows > 0) {
-              return res.status(200).json({
-                success: true,
-                message: "User Registered Successfully",
-              });
-            } else {
-              return res
-                .status(500)
-                .json({ success: false, message: "Failed to Register User" });
-            }
-          }
-        );
+    db.query(checkEmailQuery, [email], (checkEmailErr, checkEmailResult) => {
+      if (checkEmailErr) {
+        console.error("Error checking email:", checkEmailErr);
+        return res
+          .status(500)
+          .json({ success: false, message: "Internal Server Error" });
       }
-    );
+
+      // Jika email sudah ada, beri respons
+      if (checkEmailResult.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists. Please use a different email.",
+        });
+      }
+
+      // Periksa panjang password
+      if (password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message: "Password should be at least 8 characters long.",
+        });
+      }
+
+      // Query untuk insert user baru ke database tanpa hashing
+      // Menghapus 'createdat' karena tidak ada di tabel user
+      const insertUserQuery =
+        "INSERT INTO user (email, username, password) VALUES (?, ?, ?)";
+      db.query(
+        insertUserQuery,
+        [email, username, password],
+        (insertErr, result) => {
+          if (insertErr) {
+            console.error("Error during user registration:", insertErr);
+            return res
+              .status(500)
+              .json({ success: false, message: "Internal Server Error" });
+          }
+
+          if (result.affectedRows > 0) {
+            return res.status(200).json({
+              success: true,
+              message: "User Registered Successfully",
+            });
+          } else {
+            return res
+              .status(500)
+              .json({ success: false, message: "Failed to Register User" });
+          }
+        }
+      );
+    });
   } catch (error) {
     console.error("Error during user registration:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });

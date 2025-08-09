@@ -1,25 +1,25 @@
 const jwt = require("jsonwebtoken");
 
 function generateToken(user) {
+  // Waktu kedaluwarsa 1 hari
+  const expiresIn = "1d";
+
   const payload = {
-    // Informasi pada token
     userId: user.user_id,
     username: user.username,
     role: user.isPremium,
   };
 
   const options = {
-    algorithm: "HS256", // Algoritma yang digunakan
+    algorithm: "HS256",
+    expiresIn: expiresIn, // Mengatur token agar kedaluwarsa dalam 1 hari
   };
 
   const secretKey = "nutrifacts";
 
   try {
     const token = jwt.sign(payload, secretKey, options);
-
-    // Menampilkan token saat berhasil dibuat
     console.log("Token generated successfully:", token);
-
     return token;
   } catch (error) {
     console.error("Error generating token:", error);
