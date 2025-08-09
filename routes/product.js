@@ -132,7 +132,8 @@ router.get("/detail", authenticateToken, (req, res) => {
 
 // Rute untuk mendapatkan detail produk berdasarkan Barcode
 router.get("/detail/:barcode", authenticateToken, (req, res) => {
-  const barcode = req.params.barcode;
+  // ✅ PERBAIKAN: Tambahkan .trim() untuk membersihkan spasi di awal dan akhir
+  const barcode = req.params.barcode.trim();
 
   // Validasi: Pastikan barcode hanya berisi angka dan memiliki panjang yang sesuai
   if (!/^\d+$/.test(barcode)) {
