@@ -14,13 +14,13 @@ router.get("/", authenticateToken, (req, res) => {
       console.error("Error in MySQL query:", error.message);
       return res.status(500).json({
         success: false,
-        message: "Error retrieving product data",
+        message: "Terjadi kesalahan saat mengambil data produk",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Product data retrieved successfully",
+      message: "Data produk berhasil diambil",
       products: results,
     });
   });
@@ -30,7 +30,7 @@ router.get("/", authenticateToken, (req, res) => {
 router.get("/barcode", authenticateToken, (req, res) => {
   return res.status(400).json({
     success: false,
-    message: "Product barcode must be filled in. Please enter a valid barcode",
+    message: "Barcode produk harus diisi. Mohon masukkan barcode yang valid",
   });
 });
 
@@ -42,7 +42,7 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
   if (!/^\d+$/.test(barcode)) {
     return res.status(400).json({
       success: false,
-      message: "Invalid barcode format. Barcode must contain only numbers",
+      message: "Format barcode tidak valid. Barcode hanya boleh berisi angka",
     });
   }
 
@@ -53,7 +53,7 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
       console.error("Failed to get Product data: " + error.message);
       return res.status(500).json({
         success: false,
-        message: "Failed to get product Nutrition data",
+        message: "Gagal mendapatkan data nutrisi produk",
       });
     }
 
@@ -61,13 +61,13 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
       return res.status(404).json({
         success: false,
         message:
-          "Product Nutrition data not found, make sure to enter the barcode code correctly",
+          "Data nutrisi produk tidak ditemukan, pastikan kode barcode yang dimasukkan benar",
       });
     } else {
       const productData = results[0];
       return res.json({
         success: true,
-        message: "successfully retrieved product Nutrition data by barcode",
+        message: "Berhasil mendapatkan data nutrisi produk berdasarkan barcode",
         product: productData,
       });
     }
@@ -80,7 +80,7 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
 router.get("/name", authenticateToken, (req, res) => {
   return res.status(400).json({
     success: false,
-    message: "The product name must be filled in. Please enter a valid name",
+    message: "Nama produk harus diisi. Mohon masukkan nama yang valid",
   });
 });
 
@@ -92,7 +92,7 @@ router.get("/name/:name", authenticateToken, (req, res) => {
   if (!partialName) {
     return res.status(400).json({
       success: false,
-      message: "Product name must not be empty",
+      message: "Nama produk tidak boleh kosong",
     });
   }
 
@@ -104,20 +104,21 @@ router.get("/name/:name", authenticateToken, (req, res) => {
       console.error("Error in MySQL query:", error.message);
       return res.status(500).json({
         success: false,
-        message: "Error retrieving product data by name",
+        message:
+          "Terjadi kesalahan saat mengambil data produk berdasarkan nama",
       });
     }
 
     if (results.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No products found with the given name",
+        message: "Tidak ada produk yang ditemukan dengan nama tersebut",
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Product data retrieved successfully by name",
+      message: "Data produk berhasil diambil berdasarkan nama",
       products: results,
     });
   });
@@ -128,7 +129,7 @@ router.get("/detail", authenticateToken, (req, res) => {
   return res.status(400).json({
     success: false,
     message:
-      "Product details by barcode must be filled in. Please enter a valid barcode",
+      "Detail produk berdasarkan barcode harus diisi. Mohon masukkan barcode yang valid",
   });
 });
 
@@ -141,7 +142,7 @@ router.get("/detail/:barcode", authenticateToken, (req, res) => {
   if (!/^\d+$/.test(barcode)) {
     return res.status(400).json({
       success: false,
-      message: "Invalid barcode format. Barcode must contain only numbers",
+      message: "Format barcode tidak valid. Barcode hanya boleh berisi angka",
     });
   }
 
@@ -152,23 +153,126 @@ router.get("/detail/:barcode", authenticateToken, (req, res) => {
       console.error("Failed to get product data: " + error.message);
       return res
         .status(500)
-        .json({ success: false, message: "Failed to get product data" });
+        .json({ success: false, message: "Gagal mendapatkan data produk" });
     }
 
     if (results.length === 0) {
       return res.status(404).json({
         success: false,
         message:
-          "Product data not found, make sure to enter the barcode code correctly",
+          "Data produk tidak ditemukan, pastikan kode barcode yang dimasukkan benar",
       });
     }
     const productDetail = results[0];
     return res.json({
       success: true,
-      message: "successfully retrieved detailed product data by barcode",
+      message: "Berhasil mendapatkan data detail produk berdasarkan barcode",
       product: productDetail,
     });
   });
 });
+
+// ... kode yang sudah ada sebelumnya
+
+// Rute untuk menambahkan produk baru
+router.post("/", authenticateToken, (req, res) => {
+  const {
+    name,
+    company,
+    photoUrl,
+    calories,
+    fat,
+    saturated_fat,
+    trans_fat,
+    cholesterol,
+    sodium,
+    carbohydrate,
+    dietary_fiber,
+    sugar,
+    proteins,
+    calcium,
+    iron,
+    vitamin_a,
+    vitamin_c,
+    vitamin_d,
+    nutrition_level,
+    barcode,
+    information,
+    keterangan,
+  } = req.body;
+
+  // Validasi: Memastikan data penting tidak kosong
+  if (!name || !company || !barcode || !calories) {
+    return res.status(400).json({
+      success: false,
+      message: "Nama produk, perusahaan, barcode, dan kalori harus diisi.",
+    });
+  }
+
+  // Query untuk memeriksa apakah barcode sudah ada
+  const checkBarcodeQuery = "SELECT * FROM product WHERE barcode = ?";
+  db.query(checkBarcodeQuery, [barcode], (checkError, checkResults) => {
+    if (checkError) {
+      console.error("Error checking barcode:", checkError.message);
+      return res.status(500).json({
+        success: false,
+        message: "Kesalahan internal server saat memeriksa barcode.",
+      });
+    }
+
+    if (checkResults.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Produk dengan barcode ini sudah ada di database.",
+      });
+    }
+
+    // Query untuk menambahkan data produk baru ke database
+    const insertQuery = `INSERT INTO product (name, company, photoUrl, calories, fat, saturated_fat, trans_fat, cholesterol, sodium, carbohydrate, dietary_fiber, sugar, proteins, calcium, iron, vitamin_a, vitamin_c, vitamin_d, nutrition_level, barcode, information, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const values = [
+      name,
+      company,
+      photoUrl,
+      calories,
+      fat,
+      saturated_fat,
+      trans_fat,
+      cholesterol,
+      sodium,
+      carbohydrate,
+      dietary_fiber,
+      sugar,
+      proteins,
+      calcium,
+      iron,
+      vitamin_a,
+      vitamin_c,
+      vitamin_d,
+      nutrition_level,
+      barcode,
+      information,
+      keterangan,
+    ];
+
+    db.query(insertQuery, values, (error, results) => {
+      if (error) {
+        console.error("Error inserting new product:", error.message);
+        return res.status(500).json({
+          success: false,
+          message: "Gagal menambahkan produk baru ke database.",
+        });
+      }
+
+      return res.status(201).json({
+        success: true,
+        message: "Produk baru berhasil ditambahkan.",
+        productId: results.insertId,
+      });
+    });
+  });
+});
+
+module.exports = router;
 
 module.exports = router;

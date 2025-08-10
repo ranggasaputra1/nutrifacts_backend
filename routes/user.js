@@ -11,7 +11,7 @@ router.post("/login", (req, res) => {
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Please provide both email and password for login",
+      message: "Mohon sediakan email dan kata sandi untuk login",
     });
   }
 
@@ -21,14 +21,14 @@ router.post("/login", (req, res) => {
       console.error("Error during login:", err);
       return res
         .status(500)
-        .json({ success: false, message: "Internal Server Error" });
+        .json({ success: false, message: "Kesalahan Internal Server" });
     }
 
     if (results.length === 0) {
       return res.status(401).json({
         success: false,
         message:
-          "Account not Found. Make sure the email and password are correct",
+          "Akun tidak ditemukan. Pastikan email dan kata sandi sudah benar",
       });
     }
 
@@ -39,7 +39,7 @@ router.post("/login", (req, res) => {
       const token = generateToken(user);
       return res.status(200).json({
         success: true,
-        message: "Login Successful",
+        message: "Login Berhasil",
         userId: user.user_id,
         username: user.username,
         token,
@@ -47,7 +47,7 @@ router.post("/login", (req, res) => {
     } else {
       return res
         .status(401)
-        .json({ success: false, message: "Incorrect Password" });
+        .json({ success: false, message: "Kata sandi salah" });
     }
   });
 });
@@ -59,14 +59,15 @@ router.post("/signup", (req, res) => {
     if (!email || !username || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please provide email, username, and password.",
+        message: "Mohon sediakan email, username, dan kata sandi.",
       });
     }
 
     if (!email.includes("@")) {
       return res.status(400).json({
         success: false,
-        message: "Invalid email format. Please use a valid email address.",
+        message:
+          "Format email tidak valid. Mohon gunakan alamat email yang valid.",
       });
     }
 
@@ -76,20 +77,20 @@ router.post("/signup", (req, res) => {
         console.error("Error checking email:", checkEmailErr);
         return res
           .status(500)
-          .json({ success: false, message: "Internal Server Error" });
+          .json({ success: false, message: "Kesalahan Internal Server" });
       }
 
       if (checkEmailResult.length > 0) {
         return res.status(400).json({
           success: false,
-          message: "Email already exists. Please use a different email.",
+          message: "Email sudah terdaftar. Mohon gunakan email lain.",
         });
       }
 
       if (password.length < 8) {
         return res.status(400).json({
           success: false,
-          message: "Password should be at least 8 characters long.",
+          message: "Kata sandi harus memiliki panjang minimal 8 karakter.",
         });
       }
 
@@ -103,25 +104,27 @@ router.post("/signup", (req, res) => {
             console.error("Error during user registration:", insertErr);
             return res
               .status(500)
-              .json({ success: false, message: "Internal Server Error" });
+              .json({ success: false, message: "Kesalahan Internal Server" });
           }
 
           if (result.affectedRows > 0) {
             return res.status(200).json({
               success: true,
-              message: "User Registered Successfully",
+              message: "Pengguna berhasil terdaftar",
             });
           } else {
             return res
               .status(500)
-              .json({ success: false, message: "Failed to Register User" });
+              .json({ success: false, message: "Gagal mendaftarkan pengguna" });
           }
         }
       );
     });
   } catch (error) {
     console.error("Error during user registration:", error);
-    res.status(500).json({ success: false, message: "Internal Server Error" });
+    res
+      .status(500)
+      .json({ success: false, message: "Kesalahan Internal Server" });
   }
 });
 
@@ -131,7 +134,8 @@ router.post("/signup", (req, res) => {
 router.get("/history", authenticateToken, (req, res) => {
   return res.status(400).json({
     success: false,
-    message: "User ID must be provided to get history. Please enter a valid ID",
+    message:
+      "ID Pengguna harus disediakan untuk melihat riwayat. Mohon masukkan ID yang valid",
   });
 });
 
@@ -142,10 +146,14 @@ router.get("/history/:id", authenticateToken, (req, res) => {
   db.query(query, [userId], (error, results) => {
     if (error) {
       console.error("Failed to get user history data: " + error.message);
-      return res.status(500).json({ error: "Failed to get user history data" });
+      return res
+        .status(500)
+        .json({ error: "Gagal mendapatkan data riwayat pengguna" });
     }
     if (results.length === 0) {
-      return res.status(404).json({ error: "User History not found" });
+      return res
+        .status(404)
+        .json({ error: "Riwayat Pengguna tidak ditemukan" });
     } else {
       return res.json(results);
     }
@@ -159,12 +167,10 @@ router.post("/history", authenticateToken, (req, res) => {
     "INSERT INTO userhistory (name, company, photoUrl, barcode, id_user) VALUES (?, ?, ?, ?, ?)";
   db.query(sql, [name, company, photoUrl, barcode, id_user], (err, result) => {
     if (err) {
-      res.status(500).json({ error: "Failed to save data to database" });
+      res.status(500).json({ error: "Gagal menyimpan data ke database" });
       throw err;
     }
-    res
-      .status(201)
-      .json({ message: "The data History has been successfully saved" });
+    res.status(201).json({ message: "Data Riwayat berhasil disimpan" });
   });
 });
 
@@ -173,7 +179,7 @@ router.get("/saved", authenticateToken, (req, res) => {
   return res.status(400).json({
     success: false,
     message:
-      "User ID must be provided to get saved products. Please enter a valid ID",
+      "ID Pengguna harus disediakan untuk melihat produk yang disimpan. Mohon masukkan ID yang valid",
   });
 });
 
@@ -187,13 +193,15 @@ router.get("/saved/:id", authenticateToken, (req, res) => {
       // Jangan matikan proses, return array kosong
       return res.json({
         success: true,
-        message: "UserSaved data unavailable, returning empty list",
+        message:
+          "Data produk tersimpan tidak tersedia, mengembalikan daftar kosong",
         UserSaved: [],
       });
     }
     return res.json({
       success: true,
-      message: "Successfully retrieved Usersaved data by UserId",
+      message:
+        "Berhasil mengambil data produk tersimpan berdasarkan ID Pengguna",
       UserSaved: results,
     });
   });
@@ -208,13 +216,13 @@ router.post("/saved", authenticateToken, (req, res) => {
     if (err) {
       res.status(500).json({
         success: false,
-        message: "Failed to save Usersaved data to database",
+        message: "Gagal menyimpan data produk tersimpan ke database",
       });
       throw err;
     }
     res.status(201).json({
       success: true,
-      message: "The data Usersaved has been successfully saved into database",
+      message: "Data produk tersimpan berhasil disimpan ke database",
     });
   });
 });
@@ -229,12 +237,18 @@ router.delete("/saved/:id", authenticateToken, (req, res) => {
       console.error("Failed to get Usersaved data" + checkError.message);
       return res
         .status(500)
-        .json({ success: false, message: "Failed to get Usersaved data" });
+        .json({
+          success: false,
+          message: "Gagal mendapatkan data produk tersimpan",
+        });
     }
     if (checkResults.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "Usersaved data not found" });
+        .json({
+          success: false,
+          message: "Data produk tersimpan tidak ditemukan",
+        });
     }
     const deleteUserQuery = "DELETE FROM usersaved WHERE id = ?";
     db.query(deleteUserQuery, [usersavedId], (deleteError) => {
@@ -242,11 +256,17 @@ router.delete("/saved/:id", authenticateToken, (req, res) => {
         console.error("Failed to delete Usersaved data" + deleteError.message);
         return res
           .status(500)
-          .json({ success: false, message: "Failed to delete Usersaved data" });
+          .json({
+            success: false,
+            message: "Gagal menghapus data produk tersimpan",
+          });
       }
       return res
         .status(200)
-        .json({ success: true, message: "Usersaved data has been deleted" });
+        .json({
+          success: true,
+          message: "Data produk tersimpan telah dihapus",
+        });
     });
   });
 });
@@ -257,7 +277,9 @@ router.get("/", authenticateToken, (req, res) => {
   db.query(query, (error, results) => {
     if (error) {
       console.error("Error in MySQL query: " + error.message);
-      res.status(500).json({ success: false, message: "Error in MySQL query" });
+      res
+        .status(500)
+        .json({ success: false, message: "Error dalam query MySQL" });
       return;
     }
     const usersWithoutPassword = results.map((user) => {
@@ -265,7 +287,7 @@ router.get("/", authenticateToken, (req, res) => {
       return userWithoutPassword;
     });
     res.json({
-      message: "Success",
+      message: "Berhasil",
       user: req.user,
       data: usersWithoutPassword,
     });
@@ -299,14 +321,18 @@ router.put("/:id", authenticateToken, (req, res) => {
     if (password.length < 8) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 8 characters long" });
+        .json({
+          message: "Kata sandi harus memiliki panjang minimal 8 karakter",
+        });
     }
     updateFields.push("password = ?");
     updateValues.push(password);
   }
 
   if (updateFields.length === 0) {
-    return res.status(400).json({ message: "No fields to update" });
+    return res
+      .status(400)
+      .json({ message: "Tidak ada bidang untuk diperbarui" });
   }
 
   let updateUserQuery =
@@ -316,13 +342,16 @@ router.put("/:id", authenticateToken, (req, res) => {
   db.query(updateUserQuery, updateValues, (updateError, updateResults) => {
     if (updateError) {
       console.error("Failed to update user data" + updateError.message);
-      return res.status(500).json({ error: "Failed to update user data" });
+      return res.status(500).json({ error: "Gagal memperbarui data pengguna" });
     }
 
     if (updateResults.affectedRows === 0) {
       return res
         .status(404)
-        .json({ error: "User not found or no changes made" });
+        .json({
+          error:
+            "Pengguna tidak ditemukan atau tidak ada perubahan yang dibuat",
+        });
     }
 
     const getUpdatedUserQuery = "SELECT * FROM user WHERE user_id = ?";
@@ -331,13 +360,15 @@ router.put("/:id", authenticateToken, (req, res) => {
         console.error("Failed to get updated user data" + getError.message);
         return res
           .status(500)
-          .json({ error: "Failed to get updated user data" });
+          .json({
+            error: "Gagal mendapatkan data pengguna yang telah diperbarui",
+          });
       }
 
       const updatedUser = getResults[0];
       delete updatedUser.password;
       return res.status(200).json({
-        message: "Update user data successful",
+        message: "Pembaruan data pengguna berhasil",
         user: updatedUser,
       });
     });
@@ -352,21 +383,21 @@ router.delete("/:id", authenticateToken, (req, res) => {
   db.query(checkUserQuery, [userId], (checkError, checkResults) => {
     if (checkError) {
       console.error("Failed to get user data" + checkError.message);
-      return res.status(500).json({ error: "Failed to get user data" });
+      return res.status(500).json({ error: "Gagal mendapatkan data pengguna" });
     }
 
     if (checkResults.length === 0) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Pengguna tidak ditemukan" });
     }
 
     const deleteUserQuery = "DELETE FROM user WHERE user_id = ?";
     db.query(deleteUserQuery, [userId], (deleteError) => {
       if (deleteError) {
         console.error("Failed to delete user data" + deleteError.message);
-        return res.status(500).json({ error: "Failed to delete user data" });
+        return res.status(500).json({ error: "Gagal menghapus data pengguna" });
       }
 
-      return res.status(200).json({ message: "User data has been deleted" });
+      return res.status(200).json({ message: "Data pengguna telah dihapus" });
     });
   });
 });
@@ -378,13 +409,13 @@ router.get("/:id", authenticateToken, (req, res) => {
   db.query(query, [userId], (error, results) => {
     if (error) {
       console.error("Failed to get user data: " + error.message);
-      return res.status(500).json({ error: "Failed to get user data" });
+      return res.status(500).json({ error: "Gagal mendapatkan data pengguna" });
     }
 
     if (results.length === 0) {
       return res
         .status(404)
-        .json({ success: false, message: "User not found" });
+        .json({ success: false, message: "Pengguna tidak ditemukan" });
     } else {
       const user = results[0];
       delete user.password;
