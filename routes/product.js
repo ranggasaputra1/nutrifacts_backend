@@ -60,7 +60,7 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
     if (results.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Data produk tidak ditemukan",
+        message: "Data produk tidak ditemukan / Barcode tidak Valid",
       });
     } else {
       const productData = results[0];
