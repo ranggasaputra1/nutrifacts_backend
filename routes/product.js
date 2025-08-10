@@ -60,8 +60,7 @@ router.get("/barcode/:barcode", authenticateToken, (req, res) => {
     if (results.length === 0) {
       return res.status(404).json({
         success: false,
-        message:
-          "Data nutrisi produk tidak ditemukan, pastikan kode barcode yang dimasukkan benar",
+        message: "Data produk tidak ditemukan",
       });
     } else {
       const productData = results[0];
