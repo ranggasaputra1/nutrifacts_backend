@@ -171,8 +171,6 @@ router.get("/detail/:barcode", authenticateToken, (req, res) => {
   });
 });
 
-// ... kode yang sudah ada sebelumnya
-
 // Rute untuk menambahkan produk baru
 router.post("/", authenticateToken, (req, res) => {
   const {
@@ -194,6 +192,7 @@ router.post("/", authenticateToken, (req, res) => {
     vitamin_a,
     vitamin_c,
     vitamin_d,
+    label_halal, // <-- Tambahkan label_halal di sini
     nutrition_level,
     barcode,
     information,
@@ -227,7 +226,7 @@ router.post("/", authenticateToken, (req, res) => {
     }
 
     // Query untuk menambahkan data produk baru ke database
-    const insertQuery = `INSERT INTO product (name, company, photoUrl, calories, fat, saturated_fat, trans_fat, cholesterol, sodium, carbohydrate, dietary_fiber, sugar, proteins, calcium, iron, vitamin_a, vitamin_c, vitamin_d, nutrition_level, barcode, information, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const insertQuery = `INSERT INTO product (name, company, photoUrl, calories, fat, saturated_fat, trans_fat, cholesterol, sodium, carbohydrate, dietary_fiber, sugar, proteins, calcium, iron, vitamin_a, vitamin_c, vitamin_d, label_halal, nutrition_level, barcode, information, keterangan) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     const values = [
       name,
@@ -248,6 +247,7 @@ router.post("/", authenticateToken, (req, res) => {
       vitamin_a,
       vitamin_c,
       vitamin_d,
+      label_halal, // <-- Tambahkan nilai label_halal di sini
       nutrition_level,
       barcode,
       information,
@@ -271,7 +271,5 @@ router.post("/", authenticateToken, (req, res) => {
     });
   });
 });
-
-module.exports = router;
 
 module.exports = router;
