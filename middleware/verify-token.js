@@ -12,18 +12,18 @@ function generateToken(user) {
 
   const options = {
     algorithm: "HS256",
-    expiresIn: expiresIn, // Mengatur token agar kedaluwarsa dalam 1 hari
+    expiresIn: expiresIn, // Mengatur token agar kedaluwarsa dalam 365 hari
   };
 
   const secretKey = "nutrifacts";
 
   try {
     const token = jwt.sign(payload, secretKey, options);
-    console.log("Token generated successfully:", token);
+    console.log("Token berhasil dibuat:", token);
     return token;
   } catch (error) {
-    console.error("Error generating token:", error);
-    throw new Error("Failed to generate token");
+    console.error("Kesalahan saat membuat token:", error);
+    throw new Error("Gagal membuat token");
   }
 }
 
@@ -34,7 +34,9 @@ function authenticateToken(req, res, next) {
     req.headers.authorization && req.headers.authorization.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized: Missing token" });
+    return res
+      .status(401)
+      .json({ message: "Tidak Terautentikasi: Token tidak ditemukan" });
   }
 
   const secretKey = "nutrifacts";
@@ -49,8 +51,10 @@ function authenticateToken(req, res, next) {
     // Melanjutkan ke rute berikutnya
     next();
   } catch (error) {
-    console.error("Error verifying token:", error);
-    return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    console.error("Kesalahan saat verifikasi token:", error);
+    return res
+      .status(401)
+      .json({ message: "Tidak Terautentikasi: Token tidak valid" });
   }
 }
 
