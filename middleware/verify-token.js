@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 
 function generateToken(user) {
-  // Waktu kedaluwarsa 1 hari
-  const expiresIn = "1d";
+  // Waktu kedaluwarsa 365 hari
+  const expiresIn = "365d";
 
   const payload = {
     userId: user.user_id,
